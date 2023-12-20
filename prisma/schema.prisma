@@ -7,40 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator erd {
+  provider                  = "prisma-erd-generator"
+  theme                     = "neutral"
+  ignoreEnums               = true
+  includeRelationFromFields = true
+}
+
 model Admins {
-  id        Int      @id @default(autoincrement())
-  username  String?
-  email     String
-  role      ROLE
-  password  String
-  createdAt DateTime @default(now()) @db.Timestamp(0)
-  updatedAt DateTime @updatedAt @db.Timestamp(0)
-  Blogs     Blogs[]
+  id             Int              @id @default(autoincrement())
+  username       String?
+  email          String
+  role           ROLE
+  password       String
+  createdAt      DateTime         @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime         @updatedAt @db.Timestamp(0)
+  Blogs          Blogs[]
+  Contests       Contests[]
+  ContestWinners ContestWinners[]
 }
 
 model Users {
-  id                Int             @id @default(autoincrement())
-  fullName          String?
-  username          String          @unique
-  email             String          @unique
-  profilePictureURL String?
-  coverPhotoURL     String?
-  address           String?
-  about             String?
-  createdAt         DateTime        @default(now()) @db.Timestamp(0)
-  updatedAt         DateTime        @updatedAt @db.Timestamp(0)
-  Authentication    Authentication?
-  Subscriptions     Subscriptions[]
-  BlogReviews       BlogReviews[]
-  Books             Books[]
-  BookRatings       BookRatings[]
-  // Invoices          Invoices[]
-  // ReportedBooks     ReportedBooks[]
-  // Supporting        UserSupport[]   @relation("supporting")
-  // Supported         UserSupport[]   @relation("supported")
-  // UserBookmarks     UserBookmarks[]
-  // UserHistory       UserHistory[]
-  // UserWallet        UserWallet[]
+  id                 Int                  @id @default(autoincrement())
+  fullName           String?
+  username           String               @unique
+  email              String               @unique
+  profilePictureURL  String?
+  coverPhotoURL      String?
+  address            String?
+  about              String?
+  createdAt          DateTime             @default(now()) @db.Timestamp(0)
+  updatedAt          DateTime             @updatedAt @db.Timestamp(0)
+  Authentication     Authentication?
+  Subscriptions      Subscriptions[]
+  BlogReviews        BlogReviews[]
+  Books              Books[]
+  BookRatings        BookRatings[]
+  Invoices           Invoices[]
+  ReportedBooks      ReportedBooks[]
+  Bookmarks          UserBookmarks[]
+  History            UserHistory[]
+  UserWallet         UserWallet[]
+  Supporting         UserSupport[]        @relation("supporting")
+  Supported          UserSupport[]        @relation("supported")
+  BookChapterRatings BookChapterRatings[]
 }
 
 model Authentication {
@@ -92,36 +102,36 @@ model BlogReviews {
 }
 
 model Genres {
-  id         Int          @id @default(autoincrement())
-  name       String
-  // ContestGenres ContestGenres[]
-  BookGenres BookGenres[]
+  id            Int             @id @default(autoincrement())
+  name          String
+  BookGenres    BookGenres[]
+  ContestGenres ContestGenres[]
 }
 
 model Books {
-  id           Int            @id @default(autoincrement())
-  authorId     Int
-  category     BOOK_CATEGORY
-  coverPageURL String
-  title        String
-  synopsis     String?
-  ageRating    Int
-  type         BOOK_TYPE
-  canonSource  String
-  isCompleted  Boolean        @default(false)
-  views        Int            @default(0)
-  createdAt    DateTime       @default(now()) @db.Timestamp(0)
-  updatedAt    DateTime       @updatedAt @db.Timestamp(0)
-  Author       Users          @relation(fields: [authorId], references: [id])
-  Genres       BookGenres[]
-  Tags         BookTags[]
-  BookRatings  BookRatings[]
-  BookChapters BookChapters[]
-  // ReportedBooks     ReportedBooks[]
-  // UserBookmarks     UserBookmarks[]
-  // UserHistory       UserHistory[]
-  // ContestBooks      ContestBooks[]
-  // ContestWinners    ContestWinners[]
+  id             Int              @id @default(autoincrement())
+  authorId       Int
+  category       BOOK_CATEGORY
+  coverPageURL   String
+  title          String
+  synopsis       String?
+  ageRating      Int
+  type           BOOK_TYPE
+  canonSource    String
+  isCompleted    Boolean          @default(false)
+  views          Int              @default(0)
+  createdAt      DateTime         @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime         @updatedAt @db.Timestamp(0)
+  Author         Users            @relation(fields: [authorId], references: [id])
+  Genres         BookGenres[]
+  Tags           BookTags[]
+  Ratings        BookRatings[]
+  Chapters       BookChapters[]
+  ReportedBooks  ReportedBooks[]
+  UserBookmarks  UserBookmarks[]
+  UserHistory    UserHistory[]
+  ContestBooks   ContestBooks[]
+  ContestWinners ContestWinners[]
 }
 
 model BookGenres {
@@ -151,113 +161,133 @@ model BookRatings {
 }
 
 model BookChapters {
-  id          Int      @id @default(autoincrement())
+  id          Int                  @id @default(autoincrement())
   bookId      Int
   name        String
   content     String[]
-  isPublished Boolean
-  isLocked    Boolean
+  views       Int
+  isPublished Boolean              @default(true)
+  isLocked    Boolean              @default(false)
   orderNumber Int
-  createdAt   DateTime @default(now()) @db.Timestamp(0)
-  updatedAt   DateTime @updatedAt @db.Timestamp(0)
-  Book        Books    @relation(fields: [bookId], references: [id])
+  createdAt   DateTime             @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime             @updatedAt @db.Timestamp(0)
+  Book        Books                @relation(fields: [bookId], references: [id])
+  Ratings     BookChapterRatings[]
 }
 
-// model Invoices {
-//   id              Int      @id @default(autoincrement())
-//   userId          Int
-//   invoiceId       String
-//   amount          Float
-//   invoiceUrl      Int
-//   nextPaymentDate DateTime
-//   createdAt       DateTime @default(now())
-//   user            Users    @relation(fields: [userId], references: [id])
-// }
+model BookChapterRatings {
+  id        Int          @id @default(autoincrement())
+  chapterId Int
+  userId    Int
+  rating    Float
+  comment   String?
+  createdAt DateTime     @default(now()) @db.Timestamp(0)
+  Chapter   BookChapters @relation(fields: [chapterId], references: [id])
+  User      Users        @relation(fields: [userId], references: [id])
+}
 
-// model ReportedBooks {
-//   id        Int      @id @default(autoincrement())
-//   bookId    Int
-//   userId    Int
-//   reason    String
-//   message   String
-//   createdAt DateTime @default(now())
-//   user      Users    @relation(fields: [userId], references: [id])
-//   book      Books    @relation(fields: [bookId], references: [id])
-// }
+model ReportedBooks {
+  id        Int      @id @default(autoincrement())
+  bookId    Int
+  userId    Int
+  reason    String
+  message   String?
+  createdAt DateTime @default(now()) @db.Timestamp(0)
+  User      Users    @relation(fields: [userId], references: [id])
+  Book      Books    @relation(fields: [bookId], references: [id])
+}
 
-// model UserSupport {
-//   id               Int      @id @default(autoincrement())
-//   supportingUserId Int
-//   supportedUserId  Int
-//   createdAt        DateTime @default(now())
-//   supportingUser   Users    @relation("supporting", fields: [supportingUserId], references: [id])
-//   supportedUser    Users    @relation("supported", fields: [supportedUserId], references: [id])
-// }
+model Invoices {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  invoiceId       String
+  amountInCents   Int
+  invoiceURL      String
+  nextPaymentDate DateTime
+  createdAt       DateTime @default(now()) @db.Timestamp(0)
+  User            Users    @relation(fields: [userId], references: [id])
+}
 
-// model UserBookmarks {
-//   id        Int      @id @default(autoincrement())
-//   userId    Int
-//   bookId    Int
-//   createdAt DateTime @default(now())
-//   user      Users    @relation(fields: [userId], references: [id])
-//   book      Books    @relation(fields: [bookId], references: [id])
-// }
+model UserSupport {
+  id               Int      @id @default(autoincrement())
+  supportingUserId Int
+  supportedUserId  Int
+  createdAt        DateTime @default(now())
+  SupportingUser   Users    @relation("supporting", fields: [supportingUserId], references: [id])
+  SupportedUser    Users    @relation("supported", fields: [supportedUserId], references: [id])
+}
 
-// model UserHistory {
-//   id        Int      @id @default(autoincrement())
-//   userId    Int
-//   bookId    Int
-//   createdAt DateTime @default(now())
-//   user      Users    @relation(fields: [userId], references: [id])
-//   book      Books    @relation(fields: [bookId], references: [id])
-// }
+model UserBookmarks {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  bookId    Int
+  createdAt DateTime @default(now()) @db.Timestamp(0)
+  User      Users    @relation(fields: [userId], references: [id])
+  Book      Books    @relation(fields: [bookId], references: [id])
+}
 
-// model UserWallet {
-//   id              Int              @id @default(autoincrement())
-//   userId          Int
-//   amount          Float
-//   transactionType TRANSACTION_TYPE
-//   user            Users            @relation(fields: [userId], references: [id])
-// }
+model UserHistory {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  bookId    Int
+  createdAt DateTime @default(now()) @db.Timestamp(0)
+  User      Users    @relation(fields: [userId], references: [id])
+  Book      Books    @relation(fields: [bookId], references: [id])
+}
 
-// model Contests {
-//   id             Int              @id @default(autoincrement())
-//   title          String
-//   coverPhoto     String
-//   startDate      DateTime
-//   endDate        DateTime
-//   isOnGoing      Boolean
-//   rules          String
-//   createdAt      DateTime         @default(now())
-//   updatedAt      DateTime         @updatedAt
-//   ContestBooks   ContestBooks[]
-//   ContestWinners ContestWinners[]
-// }
+model UserWallet {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  amount          Float
+  transactionType TRANSACTION_TYPE
+  User            Users            @relation(fields: [userId], references: [id])
+}
 
-// model ContestGenres {
-//   id        Int      @id @default(autoincrement())
-//   contestId Int
-//   genreId   Int
-//   createdAt DateTime @default(now())
-//   genre     Genres   @relation(fields: [genreId], references: [id])
-// }
+model Contests {
+  id             Int              @id @default(autoincrement())
+  title          String
+  coverPhoto     String
+  startDate      DateTime
+  endDate        DateTime
+  isCompleted    Boolean          @default(false)
+  rules          String?
+  createdBy      Int
+  createdAt      DateTime         @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime         @updatedAt @db.Timestamp(0)
+  ContestGenres  ContestGenres[]
+  ContestBooks   ContestBooks[]
+  ContestWinners ContestWinners[]
+  Creator        Admins           @relation(fields: [createdBy], references: [id])
+}
 
-// model ContestBooks {
-//   id        Int      @id @default(autoincrement())
-//   contestId Int
-//   bookId    Int
-//   contest   Contests @relation(fields: [contestId], references: [id])
-//   book      Books    @relation(fields: [bookId], references: [id])
-// }
+model ContestGenres {
+  id        Int      @id @default(autoincrement())
+  contestId Int
+  genreId   Int
+  Genre     Genres   @relation(fields: [genreId], references: [id])
+  Contest   Contests @relation(fields: [contestId], references: [id])
+}
 
-// model ContestWinners {
-//   id        Int      @id @default(autoincrement())
-//   contestId Int
-//   bookId    Int
-//   createdAt DateTime @default(now())
-//   contest   Contests @relation(fields: [contestId], references: [id])
-//   book      Books    @relation(fields: [bookId], references: [id])
-// }
+model ContestBooks {
+  id        Int      @id @default(autoincrement())
+  contestId Int
+  bookId    Int
+  createdAt DateTime @default(now()) @db.Timestamp(0)
+  Contest   Contests @relation(fields: [contestId], references: [id])
+  Book      Books    @relation(fields: [bookId], references: [id])
+}
+
+model ContestWinners {
+  id         Int              @id @default(autoincrement())
+  contestId  Int
+  bookId     Int
+  position   WINNER_POSITIONS @default(first)
+  selectedBy Int
+  createdAt  DateTime         @default(now()) @db.Timestamp(0)
+  Contest    Contests         @relation(fields: [contestId], references: [id])
+  Book       Books            @relation(fields: [bookId], references: [id])
+  Selector   Admins           @relation(fields: [selectedBy], references: [id])
+}
 
 enum ROLE {
   superAdmin
@@ -283,4 +313,10 @@ enum BOOK_CATEGORY {
 enum BOOK_TYPE {
   original
   fan_fiction
+}
+
+enum WINNER_POSITIONS {
+  first
+  second
+  third
 }
